@@ -29,7 +29,7 @@ def getNumberCaps(anime: str)->tuple[int,str]:
 def getIndex(anime: str)->str:
     max = 0
     output = subprocess.run('animdl search made-in-abyss', stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE).stderr.decode('utf-8')
+                            stderr=subprocess.PIPE).stderr.decode('utf-16')
     for line in output.splitlines():
         if line[0].isdigit():
             if int(line[0]) > max:
