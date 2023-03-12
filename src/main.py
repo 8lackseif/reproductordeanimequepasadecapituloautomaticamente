@@ -6,24 +6,41 @@ import animdl.core.config
 import requests
 
 
-def getNumberCaps()->int:
+def getNumberCaps(anime: str)->tuple[int,str]:
     url = 'https://graphql.anilist.co'
     query = '''
            query songImage($userPreferred: String, $type: MediaType) {
                Media (search : $userPreferred, type: $type) {
+                   title{
+                        userPreferred
+                   }
                    episodes
                }
            }
            '''
     variables = {
-        'userPreferred': 'little witch academia tv',
+        'userPreferred': anime,
         'type': 'ANIME'
     }
     response = requests.post(url, json={'query': query, 'variables': variables})
     print(response.json())
-    return response.json()['data']['Media']['episodes']
+    return response.json()['data']['Media']['episodes'],response.json()['data']['Media']['title']['userPreferred']
+
+def getIndex(anime: str)->str:
+    max = 0
+    output = subprocess.run('animdl search made-in-abyss', stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE).stderr.decode('utf-8')
+    for line in output.splitlines():
+        if line[0].isdigit():
+            if int(line[0]) > max:
+                max = int(line[0])
+    return str(max)
 def main():
-    max = getNumberCaps()
+    print('escribe un anime: ')
+    name = input()
+    max,title = getNumberCaps(name)
+    print(title)
+    title = title.replace(' ' ,'-')
     ind = 1
     x = ''
     salir = 0
@@ -32,7 +49,7 @@ def main():
             animdl.core.config.DEFAULT_CONFIG['default_provider'] = site
             print('grabbing cap ' + str(ind))
             print(animdl.core.config.DEFAULT_CONFIG['default_provider'])
-            output = subprocess.run('animdl grab -r '+ str(ind) + ' --index 1 little-witch-academia',stdout=subprocess.PIPE,stderr=subprocess.DEVNULL).stdout.decode('utf-8')
+            output = subprocess.run('animdl grab -r '+ str(ind) + ' --index '+ getIndex(title) +' '+ title,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL).stdout.decode('utf-8')
             print(output)
             output = output[:output.rfind('}')+1]
             try:
