@@ -1,3 +1,5 @@
+import threading
+
 import PySimpleGUI as sg
 import subprocess
 import json
@@ -5,9 +7,13 @@ import os
 import animdl.core.config
 import requests
 
+capitulos = {
+
+}
 def getNumberCaps(anime: str)->int:
     #if it is a movie
     if "Movie" in anime:
+        print("is a movie")
         return 1
 
     url = 'https://graphql.anilist.co'
@@ -39,35 +45,45 @@ def getList(anime: str)-> list[str]:
             animeList.append(line[3:line.find('/') - 1])
     return animeList
 
-def play(firstCap: int, index: int, name:str):
+def scrap(currentEpisode: int, index: int, animeName: str):
+    for site in animdl.core.config.SITE_URLS:
+        animdl.core.config.DEFAULT_CONFIG['default_provider'] = site
+        output = subprocess.run('animdl grab -r ' + str(currentEpisode) + ' --index ' + str(index) + ' ' + animeName,
+                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.decode('utf-8')
+        output = output[:output.rfind('}') + 1]
+        try:
+            episode = json.loads(output)
+            capitulos[currentEpisode] = episode['streams'][0]['stream_url']
+            break
+        except:
+            pass
+
+def play(firstCap: int, index: int, searchName:str, realName: str):
     # calculate the range
-    lastCap = getNumberCaps(name)
+    lastCap = getNumberCaps(realName)
+    list = ''
+    threads = []
     if lastCap - (firstCap + 1) > 25:
         lastCap = firstCap + 24
-    #search for the caps
-    list = ''
-    while True:
-        for site in animdl.core.config.SITE_URLS:
-            animdl.core.config.DEFAULT_CONFIG['default_provider'] = site
-            print('grabbing cap ' + str(firstCap) + ' from ' + animdl.core.config.DEFAULT_CONFIG['default_provider'])
-            output = subprocess.run('animdl grab -r ' + str(firstCap) + ' --index ' + str(index) + ' ' + name.replace(' ','-'),
-                                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.decode('utf-8')
-            output = output[:output.rfind('}') + 1]
-            try:
-                episode = json.loads(output)
-                list += ' ' + episode['streams'][0]['stream_url']
-                break
-            except:
-                pass
-        firstCap += 1
-        if firstCap > lastCap:
-            break
+
+    animeName = searchName.replace(' ','-')
+
+    for i in range(firstCap, lastCap + 1):
+        threads.append(threading.Thread(target=scrap, args=(i,index,animeName)))
+        threads[len(threads) - 1].start()
+
+    for t in threads:
+        t.join()
+
+    for i in range(firstCap, lastCap + 1):
+        list += ' ' + capitulos[i]
     #play
     if len(list) == 0:
         print("failed grabbing stream urls")
     else:
         os.system('mpv' + list)
-def main():
+
+def mainWindow():
 
     sg.theme('DarkAmber')
 
@@ -87,34 +103,50 @@ def main():
 
     window = sg.Window('reproductordeanimequepasadecapituloautomaticamente',layout)
 
+    searchContent = ""
     currentAnime = ""
     currentAnimeList = []
     currentIndex = 0
+    isPlaying = False
 
     while True:
+        # read events on GUI
         event, values = window.read()
+        # windows closed finish task
         if event == sg.WIN_CLOSED:
             break
+        # anime searched display search results
         elif event == "Search":
+            searchContent = values["-ANIME-"]
             currentAnimeList = getList(values["-ANIME-"])
             window.Element("-SEARCH-").update(currentAnimeList)
+        #anime selected display episodes
         elif event == "-SEARCH-":
             currentAnime = values[event][0]
+            #update episodes box title
             window["-TITLE-"].update(currentAnime + ": ")
             caps = getNumberCaps(values[event][0])
             episodes = []
             for i in range(1,caps + 1):
                 episodes.append("episode " + str(i))
+            #updates episodes box
             window["-CAPS-"].update(episodes)
+        #episode selected start play
         elif event == "-CAPS-":
+            i = 0
             for n in currentAnimeList:
+                i += 1
                 if currentAnime == n:
-                    currentIndex = n
+                    currentIndex = i
                     break
-            play(int(values[event][0][len(values[event][0])-1]), currentIndex, currentAnime)
+            if isPlaying:
+                pass
+            else:
+                play(int(values[event][0][values[event][0].rfind(' ')+1:len(values[event][0])]), currentIndex, searchContent, currentAnime)
 
     window.close()
 
+if __name__ == '__main__':
+    mainWindow()
 
 
-main()
