@@ -6,6 +6,7 @@ import json
 import os
 import animdl.core.config
 import requests
+import animdl.core.package_resolver
 
 capitulos = {
 
@@ -92,10 +93,10 @@ def play(firstCap: int, index: int, searchName:str, realName: str):
 
 def mainWindow():
 
-    sg.theme('DarkAmber')
+    sg.theme('DarkGrey4')
 
     search_column = [
-        [sg.InputText(size=(50,1), key="-ANIME-"), sg.Button("Search",size=(5,1))],
+        [sg.InputText(size=(50,1), key="-ANIME-"), sg.Button("Search",size=(8,1))],
         [sg.Listbox(values=[],enable_events=True,size=(60,40),key="-SEARCH-")]
     ]
 
@@ -108,7 +109,7 @@ def mainWindow():
         [sg.Column(search_column),sg.VSeperator(),sg.Column(cap_column)]
     ]
 
-    window = sg.Window('reproductordeanimequepasadecapituloautomaticamente',layout)
+    window = sg.Window('reproductordeanimequepasadecapituloautomaticamente',layout, font=('Arial',11))
 
     searchContent = ""
     currentAnime = ""
@@ -123,9 +124,12 @@ def mainWindow():
             break
         # anime searched display search results
         elif event == "Search":
-            searchContent = values["-ANIME-"]
-            currentAnimeList = getList(values["-ANIME-"])
-            window.Element("-SEARCH-").update(currentAnimeList)
+            try:
+                searchContent = values["-ANIME-"]
+                currentAnimeList = getList(values["-ANIME-"])
+                window.Element("-SEARCH-").update(currentAnimeList)
+            except:
+                pass
         #anime selected display episodes
         elif event == "-SEARCH-":
             try:
