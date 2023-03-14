@@ -95,13 +95,13 @@ def mainWindow():
     sg.theme('DarkAmber')
 
     search_column = [
-        [sg.InputText(size=(55,1), key="-ANIME-"), sg.Button("Search",size=(5,1))],
-        [sg.Listbox(values=[],enable_events=True,size=(60,20),key="-SEARCH-")]
+        [sg.InputText(size=(50,1), key="-ANIME-"), sg.Button("Search",size=(5,1))],
+        [sg.Listbox(values=[],enable_events=True,size=(60,40),key="-SEARCH-")]
     ]
 
     cap_column = [
-        [sg.Text("caps list: ", key="-TITLE-")],
-        [sg.Listbox(values=[],enable_events=True,size=(40,20),key="-CAPS-")]
+        [sg.Text("caps list: ",size=(30,1), key="-TITLE-",expand_x=True)],
+        [sg.Listbox(values=[],enable_events=True,size=(40,40),key="-CAPS-")]
     ]
 
     layout = [
@@ -114,7 +114,6 @@ def mainWindow():
     currentAnime = ""
     currentAnimeList = []
     currentIndex = 0
-    isPlaying = False
 
     while True:
         # read events on GUI
@@ -129,15 +128,18 @@ def mainWindow():
             window.Element("-SEARCH-").update(currentAnimeList)
         #anime selected display episodes
         elif event == "-SEARCH-":
-            currentAnime = values[event][0]
-            #update episodes box title
-            window["-TITLE-"].update(currentAnime + ": ")
-            caps = getNumberCaps(values[event][0])
-            episodes = []
-            for i in range(1,caps + 1):
-                episodes.append("episode " + str(i))
-            #updates episodes box
-            window["-CAPS-"].update(episodes)
+            try:
+                currentAnime = values[event][0]
+                # update episodes box title
+                window["-TITLE-"].update(currentAnime + ": ")
+                caps = getNumberCaps(values[event][0])
+                episodes = []
+                for i in range(1, caps + 1):
+                    episodes.append("episode " + str(i))
+                # updates episodes box
+                window["-CAPS-"].update(episodes)
+            except:
+                pass
         #episode selected start play
         elif event == "-CAPS-":
             i = 0
@@ -146,11 +148,10 @@ def mainWindow():
                 if currentAnime == n:
                     currentIndex = i
                     break
-            if isPlaying:
-                pass
-            else:
+            try:
                 play(int(values[event][0][values[event][0].rfind(' ')+1:len(values[event][0])]), currentIndex, searchContent, currentAnime)
-
+            except:
+                pass
     window.close()
 
 if __name__ == '__main__':
