@@ -14,13 +14,11 @@ capitulos = {
 def getNumberCaps(anime: str)->int:
     #if it is a movie
     if "Movie" in anime:
-        print("is a movie")
         return 1
 
     if "Part" in anime and ":" in anime:
         if "Part" in anime[:anime.find(":")]:
             anime = anime[:anime.find("Part")] + anime[anime.rfind(":"):]
-    print(anime)
 
 
     url = 'https://graphql.anilist.co'
@@ -39,7 +37,6 @@ def getNumberCaps(anime: str)->int:
         'type': 'ANIME'
     }
     response = requests.post(url, json={'query': query, 'variables': variables})
-    print(response.json)
     if response.status_code == 404 or response.json()['data']['Media']['episodes'] is None:
         return 0
     return response.json()['data']['Media']['episodes']
@@ -93,16 +90,16 @@ def play(firstCap: int, index: int, searchName:str, realName: str):
 
 def mainWindow():
 
-    sg.theme('DarkGrey4')
+    sg.theme('DarkAmber')
 
     search_column = [
         [sg.InputText(size=(50,1), key="-ANIME-"), sg.Button("Search",size=(8,1))],
-        [sg.Listbox(values=[],enable_events=True,size=(60,40),key="-SEARCH-")]
+        [sg.Listbox(values=[], enable_events=True, size=(60,20), key="-SEARCH-")]
     ]
 
     cap_column = [
         [sg.Text("caps list: ",size=(30,1), key="-TITLE-",expand_x=True)],
-        [sg.Listbox(values=[],enable_events=True,size=(40,40),key="-CAPS-")]
+        [sg.Listbox(values=[],enable_events=True,size=(40,20),key="-CAPS-")]
     ]
 
     layout = [
