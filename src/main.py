@@ -1,5 +1,4 @@
 
-
 import threading
 import PySimpleGUI as sg
 import subprocess
@@ -17,6 +16,12 @@ def getNumberCaps(anime: str)->int:
         print("is a movie")
         return 1
 
+    if "Part" in anime and ":" in anime:
+        if "Part" in anime[:anime.find(":")]:
+            anime = anime[:anime.find("Part")] + anime[anime.rfind(":"):]
+    print(anime)
+
+
     url = 'https://graphql.anilist.co'
     query = '''
            query episodes($userPreferred: String, $type: MediaType) {
@@ -33,7 +38,8 @@ def getNumberCaps(anime: str)->int:
         'type': 'ANIME'
     }
     response = requests.post(url, json={'query': query, 'variables': variables})
-    if response.json()['data']['Media']['episodes'] is None:
+    print(response.json)
+    if response.status_code == 404 or response.json()['data']['Media']['episodes'] is None:
         return 0
     return response.json()['data']['Media']['episodes']
 
