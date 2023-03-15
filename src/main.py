@@ -44,7 +44,7 @@ def getNumberCaps(anime: str)->int:
 def getList(anime: str)-> list[str]:
     animeList = []
     anime = anime.replace(' ','-')
-    output = subprocess.run('animdl search ' + anime, stdout=subprocess.PIPE,stderr=subprocess.PIPE).stderr.decode('utf-8')
+    output = subprocess.run('animdl search ' + anime, stdout=subprocess.PIPE, shell=True,stderr=subprocess.PIPE).stderr.decode('utf-8')
     for line in output.splitlines():
         if line[0].isdigit():
             animeList.append(line[3:line.find('/') - 1])
@@ -55,7 +55,7 @@ def scrap(currentEpisode: int, index: int, animeName: str):
         animdl.core.config.DEFAULT_CONFIG['default_provider'] = site
         print("grabbing " + str(currentEpisode) + " from " + site)
         output = subprocess.run('animdl grab -r ' + str(currentEpisode) + ' --index ' + str(index) + ' ' + animeName,
-                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.decode('utf-8')
+                                shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.decode('utf-8')
         output = output[:output.rfind('}') + 1]
         print(output)
         try:
@@ -74,6 +74,8 @@ def play(firstCap: int, index: int, searchName:str, realName: str):
 
     animeName = searchName.replace(' ','-')
 
+    sg.Popup('Warning', 'The program will now start scraping. This may take a while.')
+
     for i in range(firstCap, lastCap + 1):
         threads.append(threading.Thread(target=scrap, args=(i,index,animeName)))
         threads[len(threads) - 1].start()
@@ -90,8 +92,10 @@ def play(firstCap: int, index: int, searchName:str, realName: str):
             except:
                 pass
     #play
+    with mpv_lock:
+        os.system('mpv --no-terminal playlist.m3u')
 
-    os.system('mpv playlist.m3u')
+mpv_lock = threading.Lock()
 
 def mainWindow():
 
