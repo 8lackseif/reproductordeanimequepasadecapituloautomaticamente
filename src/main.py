@@ -53,9 +53,11 @@ def getList(anime: str)-> list[str]:
 def scrap(currentEpisode: int, index: int, animeName: str):
     for site in animdl.core.config.SITE_URLS:
         animdl.core.config.DEFAULT_CONFIG['default_provider'] = site
+        print("grabbing " + str(currentEpisode) + " from " + site)
         output = subprocess.run('animdl grab -r ' + str(currentEpisode) + ' --index ' + str(index) + ' ' + animeName,
                                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.decode('utf-8')
         output = output[:output.rfind('}') + 1]
+        print(output)
         try:
             episode = json.loads(output)
             capitulos[currentEpisode] = episode['streams'][0]['stream_url']
@@ -66,7 +68,6 @@ def scrap(currentEpisode: int, index: int, animeName: str):
 def play(firstCap: int, index: int, searchName:str, realName: str):
     # calculate the range
     lastCap = getNumberCaps(realName)
-    list = ''
     threads = []
     if lastCap - (firstCap + 1) > 25:
         lastCap = firstCap + 24
@@ -80,13 +81,17 @@ def play(firstCap: int, index: int, searchName:str, realName: str):
     for t in threads:
         t.join()
 
-    for i in range(firstCap, lastCap + 1):
-        list += ' ' + capitulos[i]
+    with open("playlist.m3u", "w") as f:
+        for i in range(firstCap, lastCap + 1):
+            try:
+                url = capitulos[i]
+                f.write(f"#EXTINF:-1,episode " + str(i) + "\n")
+                f.write(f"" + url + "\n")
+            except:
+                pass
     #play
-    if len(list) == 0:
-        print("failed grabbing stream urls")
-    else:
-        os.system('mpv' + list)
+
+    os.system('mpv playlist.m3u')
 
 def mainWindow():
 
