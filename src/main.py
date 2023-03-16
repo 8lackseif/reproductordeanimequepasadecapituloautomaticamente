@@ -12,7 +12,6 @@ capitulos = {
 
 }
 
-isPlaying = False
 
 def getNumberCaps(anime: str)->int:
     #if it is a movie
@@ -65,12 +64,6 @@ def scrap(currentEpisode: int, index: int, animeName: str):
             break
         except:
             pass
-def playing():
-    global isPlaying
-
-    isPlaying = True
-    os.system('mpv --no-terminal playlist.m3u')
-    isPlaying = False
 
 
 def play(firstCap: int, index: int, searchName:str, realName: str):
@@ -100,8 +93,7 @@ def play(firstCap: int, index: int, searchName:str, realName: str):
             except:
                 pass
     #play
-    play = threading.Thread(target=playing)
-    play.run()
+    os.system('mpv --no-terminal playlist.m3u')
 
 
 
@@ -159,7 +151,7 @@ def mainWindow():
             except:
                 pass
         #episode selected start play
-        elif event == "-CAPS-" and isPlaying == False:
+        elif event == "-CAPS-":
             i = 0
             for n in currentAnimeList:
                 i += 1
