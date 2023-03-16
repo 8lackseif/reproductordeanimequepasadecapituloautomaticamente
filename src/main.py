@@ -11,6 +11,9 @@ import animdl.core.package_resolver
 capitulos = {
 
 }
+
+isPlaying = False
+
 def getNumberCaps(anime: str)->int:
     #if it is a movie
     if "Movie" in anime:
@@ -53,17 +56,22 @@ def getList(anime: str)-> list[str]:
 def scrap(currentEpisode: int, index: int, animeName: str):
     for site in animdl.core.config.SITE_URLS:
         animdl.core.config.DEFAULT_CONFIG['default_provider'] = site
-        print("grabbing " + str(currentEpisode) + " from " + site)
         output = subprocess.run('animdl grab -r ' + str(currentEpisode) + ' --index ' + str(index) + ' ' + animeName,
                                 shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.decode('utf-8')
         output = output[:output.rfind('}') + 1]
-        print(output)
         try:
             episode = json.loads(output)
             capitulos[currentEpisode] = episode['streams'][0]['stream_url']
             break
         except:
             pass
+def playing():
+    global isPlaying
+
+    isPlaying = True
+    os.system('mpv --no-terminal playlist.m3u')
+    isPlaying = False
+
 
 def play(firstCap: int, index: int, searchName:str, realName: str):
     # calculate the range
@@ -92,10 +100,10 @@ def play(firstCap: int, index: int, searchName:str, realName: str):
             except:
                 pass
     #play
-    with mpv_lock:
-        os.system('mpv --no-terminal playlist.m3u')
+    play = threading.Thread(target=playing)
+    play.run()
 
-mpv_lock = threading.Lock()
+
 
 def mainWindow():
 
@@ -151,7 +159,7 @@ def mainWindow():
             except:
                 pass
         #episode selected start play
-        elif event == "-CAPS-":
+        elif event == "-CAPS-" and isPlaying == False:
             i = 0
             for n in currentAnimeList:
                 i += 1
