@@ -7,7 +7,7 @@
 ---
 ## Install
 
-### Option 1 (todavia no he subido el zip xd) :
+### Option 1 :
   1. Download release zip file.
   2. Extract to a directory.
   3. Open the main.exe.
