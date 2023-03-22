@@ -93,7 +93,7 @@ def play(firstCap: int, index: int, searchName:str, realName: str):
             except:
                 pass
     #play
-    os.system('mpv --no-terminal playlist.m3u')
+    subprocess.run('mpv --no-terminal playlist.m3u',shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
 
 
