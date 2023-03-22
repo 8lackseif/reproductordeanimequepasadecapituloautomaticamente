@@ -19,7 +19,7 @@
   3. Go to the proyect directory, in terminal ` pip install -r requirements.txt `.
   4. Generate the .exe file with,
   ``` 
-  pyinstaller --onefile --noconsole --hidden-import=lxml --add-data "venv/Lib/site-packages/lxml-4.9.2.dist-info;lxml-4.9.2.dist-info" src/main.py `
+  pyinstaller --onefile --noconsole --hidden-import=lxml --add-data "venv/Lib/site-packages/lxml-4.9.2.dist-info;lxml-4.9.2.dist-info" src/main.py
   
   ```
   5. Move the main.exe where you want.
