@@ -4,7 +4,7 @@ import subprocess
 import json
 import animdl.core.config
 import requests
-import animdl.core.package_resolver
+import animdl.core.cli.commands.search
 
 capitulos = {
 
@@ -44,14 +44,9 @@ def getNumberCaps(anime: str) -> int:
 
 async def getList(anime: str) -> list[str]:
     animeList = []
-    anime = anime.replace(' ', '-')
-    player = await asyncio.create_subprocess_exec('animdl', 'search',anime,
-                                                  stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-    stdout,stderr = await player.communicate()
-    output = stderr.decode().strip()
-    for line in output.splitlines():
-        if line[0].isdigit():
-            animeList.append(line[3:line.find('/') - 1])
+    player = animdl.core.cli.commands.search.animdl_search(["-j", anime])
+    for x in player:
+        animeList.append(x["name"])
     return animeList
 
 async def scrap(currentEpisode: int, index: int, animeName: str):
