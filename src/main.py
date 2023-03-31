@@ -1,15 +1,12 @@
 import asyncio
+import json
+
 import PySimpleGUI as sg
 import subprocess
-import json
 import animdl.core.config
 import requests
-import animdl.core.cli.commands.search
-
-capitulos = {
-
-}
-
+import animdl.core.cli.helpers.searcher as search
+from animdl.core.cli.http_client import client
 
 def getNumberCaps(anime: str) -> int:
     # if it is a movie
@@ -44,20 +41,17 @@ def getNumberCaps(anime: str) -> int:
 
 async def getList(anime: str) -> list[str]:
     animeList = []
-    player = animdl.core.cli.commands.search.animdl_search(["-j", anime])
+    player = search.provider_searcher_mapping.get(animdl.core.config.DEFAULT_CONFIG['default_provider'])(client,anime)
     for x in player:
         animeList.append(x["name"])
     return animeList
 
-async def scrap(currentEpisode: int, index: int, animeName: str):
+async def scrap(currentEpisode: int, index: int, animeName: str, file):
     for site in animdl.core.config.SITE_URLS:
         animdl.core.config.DEFAULT_CONFIG['default_provider'] = site
-        output = subprocess.run('animdl grab -r ' + str(currentEpisode) + ' --index ' + str(index) + ' ' + animeName,
-                                shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout.decode('utf-8')
-        output = output[:output.rfind('}') + 1]
+        subprocess.run('animdl grab -r ' + str(currentEpisode) + ' --index ' + str(index) + ' ' + animeName,
+                                shell=True, stdout=file,stderr=subprocess.DEVNULL)
         try:
-            episode = json.loads(output)
-            capitulos[currentEpisode] = episode['streams'][0]['stream_url']
             break
         except:
             pass
@@ -73,20 +67,38 @@ async def play(firstCap: int, index: int, searchName: str, realName: str):
 
     sg.Popup('Warning', 'The program will now start scraping. This may take a while.')
 
-    for i in range(firstCap, lastCap + 1):
-        await scrap(i,index,animeName)
-
-    with open("playlist.m3u", "w") as f:
+    with open("episodes.txt", "w") as file:
         for i in range(firstCap, lastCap + 1):
-            try:
-                url = capitulos[i]
-                f.write(f"#EXTINF:-1,episode " + str(i) + "\n")
-                f.write(f"" + url + "\n")
-            except:
-                pass
-    # play
-    player = await asyncio.create_subprocess_exec('mpv', '--no-terminal', 'playlist.m3u',
-                                                  stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            await scrap(i,index,animeName,file)
+
+    with open("episodes.txt","r") as r:
+        data = '{ "episodes": ['
+        counter = 1
+
+        for x in r.read().splitlines():
+            if counter != 1:
+                if x.find("{") != -1:
+                    data += ','+ x
+            else:
+                data += x
+            counter += 1
+
+        data += ']}'
+
+        episodes = json.loads(data)
+        with open("playlist.m3u", "w") as f:
+            j = 0
+            for i in range(firstCap, lastCap + 1):
+                try:
+                    if i == episodes['episodes'][j]['episode']:
+                        f.write(f"#EXTINF:-1,episode " + str(i) + "\n")
+                        f.write(f"" + episodes['episodes'][j]['streams'][0]['stream_url'] + "\n")
+                except:
+                    pass
+                j+=1
+            # play
+            player = await asyncio.create_subprocess_exec('mpv', '--no-terminal', 'playlist.m3u',
+                                                          stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
 
 
 async def mainWindow():
