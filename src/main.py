@@ -1,6 +1,5 @@
 import asyncio
 import json
-
 import PySimpleGUI as sg
 import subprocess
 import animdl.core.config
@@ -57,6 +56,7 @@ async def scrap(currentEpisode: int, index: int, animeName: str, file):
             pass
 
 
+
 async def play(firstCap: int, index: int, searchName: str, realName: str):
     # calculate the range
     lastCap = getNumberCaps(realName)
@@ -70,37 +70,28 @@ async def play(firstCap: int, index: int, searchName: str, realName: str):
     with open("episodes.txt", "w") as file:
         for i in range(firstCap, lastCap + 1):
             await scrap(i,index,animeName,file)
+    file.close()
 
-    with open("episodes.txt","r") as r:
-        data = '{ "episodes": ['
-        counter = 1
-
-        for x in r.read().splitlines():
-            if counter != 1:
-                if x.find("{") != -1:
-                    data += ','+ x
-            else:
-                data += x
-            counter += 1
-
-        data += ']}'
-
+    with open("episodes.txt","r") as read:
+        list = ','.join(read.read().splitlines()[:-1]).replace("[0m","")
+        data = '{ "episodes": [' + list + ']}'
         episodes = json.loads(data)
-        with open("playlist.m3u", "w") as f:
-            j = 0
-            for i in range(firstCap, lastCap + 1):
-                try:
-                    if i == episodes['episodes'][j]['episode']:
-                        f.write(f"#EXTINF:-1,episode " + str(i) + "\n")
-                        f.write(f"" + episodes['episodes'][j]['streams'][0]['stream_url'] + "\n")
-                except:
-                    pass
-                j+=1
-            # play
-            player = await asyncio.create_subprocess_exec('mpv', '--no-terminal', 'playlist.m3u',
-                                                          stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+    read.close()
 
-
+    with open("playlist.m3u", "w") as playlist:
+        j = 0
+        for i in range(firstCap, lastCap + 1):
+            try:
+                if i == episodes['episodes'][j]['episode']:
+                    playlist.write(f"#EXTINF:-1,episode " + str(i) + "\n")
+                    playlist.write(f"" + episodes['episodes'][j]['streams'][0]['stream_url'] + "\n")
+            except:
+                pass
+            j+=1
+    playlist.close()
+    # play
+    player = await asyncio.create_subprocess_exec('mpv', '--no-terminal', 'playlist.m3u',
+                                                  stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
 async def mainWindow():
     sg.theme('DarkAmber')
 
@@ -166,6 +157,7 @@ async def mainWindow():
                            searchContent, currentAnime)
             except:
                 pass
+
     window.close()
 
 
