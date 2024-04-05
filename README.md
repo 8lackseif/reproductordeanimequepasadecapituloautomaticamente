@@ -34,7 +34,7 @@
   
   ![imagen](https://user-images.githubusercontent.com/108239975/227038069-b718a801-5d5f-48cb-83a1-42e8b91156b5.png)
   ---
-  - change your episode with the mpv next video option or just wait, it will start the second video automatically when finish first one
+  - change your episode with the mpv next video option or just wait, it will start next video automatically when previous one finish. 
   
   ![imagen](https://user-images.githubusercontent.com/108239975/227038471-18bbb5e4-9bb1-4d2c-a3ad-fba14f378dd8.png)
 
